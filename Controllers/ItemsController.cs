@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Catalog.Reposititories;
 using Catalog.Entities;
 using Catalog.DTOs;
+using Microsoft.Extensions.Logging;
 
 // For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -17,16 +18,19 @@ namespace Catalog.Controllers
     {
 
         private readonly IInMemItemsRepository repository;
-
-        public ItemsController(IInMemItemsRepository repo)
+        private readonly ILogger<ItemsController> logger;
+        public ItemsController(IInMemItemsRepository repo, ILogger<ItemsController> logger)
         {
             repository = repo;
+            this.logger = logger;
         }
         //GET /items
         [HttpGet]
         public async Task<IEnumerable<ItemDTO>> GetItemsAsync()
         {
             var items = (await repository.GetItemsAsync()).Select(item => item.AsDTO());
+
+            logger.LogInformation($"{DateTime.UtcNow.ToString("hh:mm:ss")}: Retrieved {items.Count()} items");
             return items;
         }
 
@@ -82,7 +86,7 @@ namespace Catalog.Controllers
         public async Task<ActionResult> DeleteItemAsync(Guid id)
         {
             var existingItem = await repository.GetItemAsync(id);
-            if(existingItem is null)
+            if (existingItem is null)
             {
                 return NotFound();
             }
